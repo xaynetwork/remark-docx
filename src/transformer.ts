@@ -19,6 +19,7 @@ import {
   ILevelsOptions,
   FootnoteReferenceRun,
   CheckBox,
+  WidthType,
 } from "docx";
 import type { IPropertiesOptions } from "docx/build/file/core-properties";
 import type * as mdast from "./models/mdast";
@@ -435,6 +436,10 @@ const buildTable = ({ children, align }: mdast.Table, ctx: Context) => {
   });
 
   return new Table({
+    width: {
+      size: 100,
+      type: WidthType.PERCENTAGE,
+    },
     rows: children.map((r) => {
       return buildTableRow(r, ctx, cellAligns);
     }),
