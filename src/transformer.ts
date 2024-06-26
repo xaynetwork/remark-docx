@@ -117,13 +117,13 @@ type ListInfo = Readonly<{
 }>;
 
 export type TableStyle = {
-  options: Omit<ITableOptions, 'rows'>,
-  header: {
+  options?: Omit<ITableOptions, 'rows'>,
+  header?: {
     row: ITableRowPropertiesOptions,
     cell: ITableCellPropertiesOptions,
     paragraph: IParagraphPropertiesOptions
   },
-  body: {
+  body?: {
     row: ITableRowPropertiesOptions,
     cell: ITableCellPropertiesOptions,
     paragraph: IParagraphPropertiesOptions

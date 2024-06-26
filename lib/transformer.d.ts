@@ -12,13 +12,13 @@ export type ImageData = {
 };
 export type ImageResolver = (url: string) => Promise<ImageData> | ImageData;
 export type TableStyle = {
-    options: Omit<ITableOptions, 'rows'>;
-    header: {
+    options?: Omit<ITableOptions, 'rows'>;
+    header?: {
         row: ITableRowPropertiesOptions;
         cell: ITableCellPropertiesOptions;
         paragraph: IParagraphPropertiesOptions;
     };
-    body: {
+    body?: {
         row: ITableRowPropertiesOptions;
         cell: ITableCellPropertiesOptions;
         paragraph: IParagraphPropertiesOptions;
