@@ -19,6 +19,7 @@ import {
   ILevelsOptions,
   FootnoteReferenceRun,
   CheckBox,
+  ITableWidthProperties,
 } from "docx";
 import type { IPropertiesOptions } from "docx/build/file/core-properties";
 import type * as mdast from "./models/mdast";
@@ -111,12 +112,20 @@ type ListInfo = Readonly<{
   checked?: boolean;
 }>;
 
+type customStyles = Readonly<{
+  table?: {
+    width?: ITableWidthProperties | undefined
+  },
+}>
+
 type Context = Readonly<{
   deco: Decoration;
   images: ImageDataMap;
   indent: number;
   list?: ListInfo;
+  customStyles?: customStyles
 }>;
+
 
 export interface DocxOptions
   extends Pick<
@@ -139,6 +148,8 @@ export interface DocxOptions
    * **You must set** if your markdown includes images. See example for [browser](https://github.com/inokawa/remark-docx/blob/main/stories/playground.stories.tsx) and [Node.js](https://github.com/inokawa/remark-docx/blob/main/src/index.spec.ts).
    */
   imageResolver?: ImageResolver;
+
+  customStyles?: customStyles
 }
 
 type DocxChild = Paragraph | Table | TableOfContents;
@@ -167,6 +178,7 @@ export const mdastToDocx = async (
     revision,
     styles,
     background,
+    customStyles,
   }: DocxOptions,
   images: ImageDataMap
 ): Promise<any> => {
@@ -174,6 +186,7 @@ export const mdastToDocx = async (
     deco: {},
     images,
     indent: 0,
+    customStyles
   });
   const doc = new Document({
     title,
@@ -211,7 +224,7 @@ export const mdastToDocx = async (
 
 const convertNodes = (
   nodes: mdast.Content[],
-  ctx: Context
+  ctx: Context,
 ): ConvertNodesReturn => {
   const results: DocxContent[] = [];
   let footnotes: Footnotes = {};
@@ -435,6 +448,7 @@ const buildTable = ({ children, align }: mdast.Table, ctx: Context) => {
   });
 
   return new Table({
+    width: ctx.customStyles?.table?.width,
     rows: children.map((r) => {
       return buildTableRow(r, ctx, cellAligns);
     }),
