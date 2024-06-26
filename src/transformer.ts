@@ -20,11 +20,15 @@ import {
   FootnoteReferenceRun,
   CheckBox,
   ITableWidthProperties,
+  ITableOptions,
+  ITableRowPropertiesOptions,
+  IParagraphPropertiesOptions,
 } from "docx";
 import type { IPropertiesOptions } from "docx/build/file/core-properties";
 import type * as mdast from "./models/mdast";
 import { parseLatex } from "./latex";
 import { invariant, unreachable } from "./utils";
+import { ITableCellPropertiesOptions } from "docx/build/file/table/table-cell/table-cell-properties";
 
 const ORDERED_LIST_REF = "ordered";
 const INDENT = 0.5;
@@ -112,20 +116,27 @@ type ListInfo = Readonly<{
   checked?: boolean;
 }>;
 
-type customStyles = Readonly<{
-  table?: {
-    width?: ITableWidthProperties | undefined
+export type TableStyle = {
+  options: Omit<ITableOptions, 'rows'>,
+  header: {
+    row: ITableRowPropertiesOptions,
+    cell: ITableCellPropertiesOptions,
+    paragraph: IParagraphPropertiesOptions
   },
-}>
+  body: {
+    row: ITableRowPropertiesOptions,
+    cell: ITableCellPropertiesOptions,
+    paragraph: IParagraphPropertiesOptions
+  },
+}
 
 type Context = Readonly<{
   deco: Decoration;
   images: ImageDataMap;
   indent: number;
   list?: ListInfo;
-  customStyles?: customStyles
+  tableStyle?: TableStyle | undefined
 }>;
-
 
 export interface DocxOptions
   extends Pick<
@@ -149,7 +160,7 @@ export interface DocxOptions
    */
   imageResolver?: ImageResolver;
 
-  customStyles?: customStyles
+  tableStyle?: TableStyle | undefined
 }
 
 type DocxChild = Paragraph | Table | TableOfContents;
@@ -178,7 +189,7 @@ export const mdastToDocx = async (
     revision,
     styles,
     background,
-    customStyles,
+    tableStyle,
   }: DocxOptions,
   images: ImageDataMap
 ): Promise<any> => {
@@ -186,7 +197,7 @@ export const mdastToDocx = async (
     deco: {},
     images,
     indent: 0,
-    customStyles
+    tableStyle
   });
   const doc = new Document({
     title,
@@ -448,9 +459,10 @@ const buildTable = ({ children, align }: mdast.Table, ctx: Context) => {
   });
 
   return new Table({
-    width: ctx.customStyles?.table?.width,
-    rows: children.map((r) => {
-      return buildTableRow(r, ctx, cellAligns);
+    ...ctx.tableStyle?.options,
+    rows: children.map((r, i) => {
+      const style = i === 0 ? ctx.tableStyle?.header : ctx.tableStyle?.body;
+      return buildTableRow(r, ctx, cellAligns, style);
     }),
   });
 };
@@ -458,11 +470,13 @@ const buildTable = ({ children, align }: mdast.Table, ctx: Context) => {
 const buildTableRow = (
   { children }: mdast.TableRow,
   ctx: Context,
-  cellAligns: AlignmentType[] | undefined
+  cellAligns: AlignmentType[] | undefined,
+  style: TableStyle["header"] | TableStyle["body"] | undefined
 ) => {
   return new TableRow({
+    ...style?.row,
     children: children.map((c, i) => {
-      return buildTableCell(c, ctx, cellAligns?.[i]);
+      return buildTableCell(c, ctx, cellAligns === null || cellAligns === void 0 ? void 0 : cellAligns[i], style);
     }),
   });
 };
@@ -470,12 +484,15 @@ const buildTableRow = (
 const buildTableCell = (
   { children }: mdast.TableCell,
   ctx: Context,
-  align: AlignmentType | undefined
+  align: AlignmentType | undefined,
+  style: TableStyle["header"] | TableStyle["body"] | undefined
 ) => {
   const { nodes } = convertNodes(children, ctx);
   return new TableCell({
+    ...style?.cell,
     children: [
       new Paragraph({
+        ...style?.paragraph,
         alignment: align,
         children: nodes,
       }),
