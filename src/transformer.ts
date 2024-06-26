@@ -19,7 +19,6 @@ import {
   ILevelsOptions,
   FootnoteReferenceRun,
   CheckBox,
-  ITableWidthProperties,
   ITableOptions,
   ITableRowPropertiesOptions,
   IParagraphPropertiesOptions,
